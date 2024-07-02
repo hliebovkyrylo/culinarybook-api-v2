@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String              @id @default(auto()) @map("_id") @db.ObjectId
+  email                String              @unique
+  username             String              @unique
+  name                 String
+  image                String
+  backgroundImage      String
+  isVerified           Boolean
+  canResetPassword     Boolean
+  password             String
+  isPrivate            Boolean             @default(false)
+  vereficationCode     VerificationCode[]
+  follows              Follow[]            @relation("UserFollows")
+  followed             Follow[]            @relation("UserFollowed")
+  recipe               Recipe[]
+  like                 Like[]
+  visited              Visited[]
+  saved                Saved[]
+  commentReply         CommentReply[]
+  notifications        Notification[]      @relation("UserNotifications")
+  createdNotifications Notification[]      @relation("NotificationCreators")
+  comment              Comment[]
+}
+
+model VerificationCode {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  code       String
+  expiryTime BigInt
+  userId     String @db.ObjectId @unique
+  user       User   @relation(fields: [userId], references: [id])
+}
+
+model Follow {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String @db.ObjectId
+  followerId String @db.ObjectId
+  user       User   @relation("UserFollows", fields: [userId], references: [id])
+  follower   User   @relation("UserFollowed", fields: [followerId], references: [id])
+}
+
+model Recipe {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId         String   @db.ObjectId
+  title           String
+  image           String
+  coockingTime    String
+  complexity      String
+  typeOfFood      String
+  ingradients     String
+  isPublic        Boolean
+  createdAt       DateTime @default(now())
+  applyBackground Boolean
+  owner           User     @relation(fields: [ownerId], references: [id])
+  like            Like[]
+  visited         Visited[]
+  saved           Saved[]
+  step            Step[]
+  comment         Comment[]
+  notifications   Notification[]
+}
+
+model Like {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId String @db.ObjectId
+  userId   String @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+}
+
+model Visited {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId String @db.ObjectId
+  userId   String @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+}
+
+model Saved {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId String @db.ObjectId
+  userId   String @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+}
+
+model Step {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId        String @db.ObjectId
+  stepNumber      Int
+  stepDescription String
+  recipe          Recipe @relation(fields: [recipeId], references: [id])
+}
+
+model Comment {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId       String          @db.ObjectId
+  commentText    String
+  userId         String          @db.ObjectId
+  grade          Int
+  recipe         Recipe          @relation(fields: [recipeId], references: [id])
+  createdAt      DateTime        @default(now()) @map("createdAt")
+  commentReply   CommentReply[]
+  user           User            @relation(fields: [userId], references: [id])
+}
+
+model CommentReply {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  commentText String
+  commentId   String   @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  comment     Comment  @relation(fields: [commentId], references: [id])
+  createdAt   DateTime @default(now()) @map("createdAt")
+}
+
+model Notification {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  type                 String
+  noficationData       String?  @default("")
+  isRead               Boolean  @default(false)
+  userId               String   @db.ObjectId
+  noficitaionCreatorId String   @db.ObjectId
+  recipeId             String?  @default("") @db.ObjectId
+  createdAt            DateTime @default(now()) @map("createdAt")
+  user                 User     @relation("UserNotifications", fields: [userId], references: [id])
+  notificationCreator  User     @relation("NotificationCreators", fields: [noficitaionCreatorId], references: [id])
+  recipe               Recipe?  @relation(fields: [recipeId], references: [id])
+}
+
+model FollowRequest {
+  id          String @id @db.ObjectId @default(auto()) @map("_id")
+  requesterId String @db.ObjectId
+  requestedId String @db.ObjectId
+}
