@@ -12,22 +12,22 @@ model User {
   email                String              @unique
   username             String              @unique
   name                 String
-  image                String
-  backgroundImage      String
+  image                String              @default("")
+  backgroundImage      String              @default("")
   isVerified           Boolean
-  canResetPassword     Boolean
+  canResetPassword     Boolean             @default(false)
   password             String
   isPrivate            Boolean             @default(false)
   vereficationCode     VerificationCode[]
-  follows              Follow[] @relation("UserFollows")
-  followed             Follow[] @relation("UserFollowed")
+  follows              Follow[]            @relation("UserFollows")
+  followed             Follow[]            @relation("UserFollowed")
   recipe               Recipe[]
   like                 Like[]
   visited              Visited[]
   saved                Saved[]
   commentReply         CommentReply[]
-  notifications        Notification[]  @relation("UserNotifications")
-  createdNotifications Notification[] @relation("NotificationCreators")
+  notifications        Notification[]      @relation("UserNotifications")
+  createdNotifications Notification[]      @relation("NotificationCreators")
   comment              Comment[]
 }
 
