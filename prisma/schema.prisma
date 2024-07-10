@@ -19,15 +19,15 @@ model User {
   password             String
   isPrivate            Boolean             @default(false)
   vereficationCode     VerificationCode[]
-  follows              Follow[]            @relation("UserFollows")
-  followed             Follow[]            @relation("UserFollowed")
+  follows              Follow[] @relation("UserFollows")
+  followed             Follow[] @relation("UserFollowed")
   recipe               Recipe[]
   like                 Like[]
   visited              Visited[]
   saved                Saved[]
   commentReply         CommentReply[]
-  notifications        Notification[]      @relation("UserNotifications")
-  createdNotifications Notification[]      @relation("NotificationCreators")
+  notifications        Notification[]  @relation("UserNotifications")
+  createdNotifications Notification[] @relation("NotificationCreators")
   comment              Comment[]
 }
 
@@ -40,16 +40,17 @@ model VerificationCode {
 }
 
 model Follow {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String @db.ObjectId
-  followerId String @db.ObjectId
-  user       User   @relation("UserFollows", fields: [userId], references: [id])
-  follower   User   @relation("UserFollowed", fields: [followerId], references: [id])
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  followerId String   @db.ObjectId
+  user       User     @relation("UserFollows", fields: [userId], references: [id])
+  follower   User     @relation("UserFollowed", fields: [followerId], references: [id])
+  createdAt  DateTime @default(now()) @map("createdAt")
 }
 
 model Recipe {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId         String   @db.ObjectId
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId         String @db.ObjectId
   title           String
   image           String
   coockingTime    String
@@ -59,7 +60,7 @@ model Recipe {
   isPublic        Boolean
   createdAt       DateTime @default(now())
   applyBackground Boolean
-  owner           User     @relation(fields: [ownerId], references: [id])
+  owner           User @relation(fields: [ownerId], references: [id])
   like            Like[]
   visited         Visited[]
   saved           Saved[]
@@ -69,27 +70,30 @@ model Recipe {
 }
 
 model Like {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  recipeId String @db.ObjectId
-  userId   String @db.ObjectId
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  user     User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId  String   @db.ObjectId
+  userId    String   @db.ObjectId
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now()) @map("createdAt")
 }
 
 model Visited {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  recipeId String @db.ObjectId
-  userId   String @db.ObjectId
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  user     User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId  String   @db.ObjectId
+  userId    String   @db.ObjectId
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now()) @map("createdAt")
 }
 
 model Saved {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  recipeId String @db.ObjectId
-  userId   String @db.ObjectId
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  user     User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId  String   @db.ObjectId
+  userId    String   @db.ObjectId
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now()) @map("createdAt")
 }
 
 model Step {
@@ -113,12 +117,12 @@ model Comment {
 }
 
 model CommentReply {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
   commentText String
-  commentId   String   @db.ObjectId
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
-  comment     Comment  @relation(fields: [commentId], references: [id])
+  commentId   String  @db.ObjectId
+  userId      String  @db.ObjectId
+  user        User    @relation(fields: [userId], references: [id])
+  comment     Comment @relation(fields: [commentId], references: [id])
   createdAt   DateTime @default(now()) @map("createdAt")
 }
 

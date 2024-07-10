@@ -11,6 +11,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import fastifyPassport from '@fastify/passport';
 import { HttpExeptionFilter } from './middleware/http-exeption.middleware';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 config();
 
@@ -28,6 +29,7 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(new HttpExeptionFilter());
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   await app.register(fastifyCors, {
     origin: corsOrigin,
