@@ -29,31 +29,6 @@ export const createAccessToken = (id: string) => {
 
 export const createRefreshToken = (id: string) => {
   try {
-    const refreshToken = jwt.sign(
-      {
-        id,
-      },
-      jwtSecret,
-      {
-        expiresIn: jwtRefreshTokenExpiresIn,
-      },
-    );
-
-    return serialize('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.PRODUCTION === 'true',
-      sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
-      maxAge: 60 * 60 * 24 * 31,
-      path: '/',
-    });
-  } catch (error) {
-    console.log(error);
-    throw new InternalServerErrorException('Internal server error');
-  }
-};
-
-export const createNoSerializedRefreshToken = (id: string) => {
-  try {
     return jwt.sign(
       {
         id,

@@ -3,6 +3,8 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
+  HttpException,
+  Inject,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,7 +13,7 @@ import { verifyToken } from '../../utils/token.util';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
 export class AuthGuard implements CanActivate {
-  constructor(private userService: UserService) {}
+  constructor(@Inject(UserService) private userService: UserService) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<FastifyRequest>();
@@ -32,6 +34,10 @@ export class AuthGuard implements CanActivate {
       req.user = user;
       return true;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException('Access token has expired');
       }

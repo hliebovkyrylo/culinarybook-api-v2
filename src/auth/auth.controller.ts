@@ -1,8 +1,8 @@
 import { AuthService } from './auth.service';
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Res, Post } from '@nestjs/common';
 import { SignUpDto } from './dto/sign-up.dto';
 import { FastifyReply } from 'fastify';
-import { createAccessToken, createRefreshToken } from '../utils/token.util';
+import { SignInDto } from './dto/sign-in.dto';
 
 @Controller('/auth')
 export class AuthController {
@@ -13,12 +13,32 @@ export class AuthController {
     @Body() signUpDto: SignUpDto,
     @Res() res: FastifyReply,
   ): Promise<{ access_token: string }> {
-    const user = await this.authService.signUp(signUpDto);
+    const result = await this.authService.signUp(signUpDto);
 
-    const access_token = createAccessToken(user.id);
-    const refresh_token = createRefreshToken(user.id);
+    res.setCookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.PRODUCTION === 'true',
+      sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
+      maxAge: 31 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    return res.send({ access_token: result.access_token });
+  }
 
-    res.setCookie('refresh_token', refresh_token);
-    return res.send({ access_token });
+  @Post('sign-in')
+  async signIn(
+    @Body() signInDto: SignInDto,
+    @Res() res: FastifyReply,
+  ): Promise<{ access_token: string }> {
+    const result = await this.authService.signIn(signInDto);
+
+    res.setCookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.PRODUCTION === 'true',
+      sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
+      maxAge: 31 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    return res.send({ access_token: result.access_token });
   }
 }

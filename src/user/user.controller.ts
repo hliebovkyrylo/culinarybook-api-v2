@@ -23,10 +23,11 @@ export class UserController {
 
   @Get('get/me')
   @UseGuards(AuthGuard)
-  async getMe(@Request() req: FastifyRequest): Promise<User> {
+  async getMe(@Request() req: FastifyRequest): Promise<UserMeDto> {
     const user = req.user as User;
+    const userMe = await this.userService.getUserById(user.id);
 
-    return await this.userService.getUserById(user.id);
+    return new UserMeDto(userMe);
   }
 
   @Get('get/:userId')

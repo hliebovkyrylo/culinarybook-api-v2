@@ -3,6 +3,7 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -14,6 +15,10 @@ export class SignUpDto {
   @IsString()
   @MinLength(2)
   @MaxLength(32)
+  @Matches(/^[a-z]+$/, {
+    message:
+      'Username must contain only lowercase English letters without spaces',
+  })
   username: string;
 
   @IsString()
