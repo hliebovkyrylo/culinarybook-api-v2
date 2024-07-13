@@ -84,11 +84,12 @@ export class AuthController {
               });
 
               res.setCookie('access_token', result.access_token, {
-                httpOnly: true,
+                httpOnly: false,
                 secure: process.env.PRODUCTION === 'true',
                 sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
                 maxAge: 2 * 24 * 60 * 60 * 1000,
                 path: '/',
+                domain: '.culinarybook.website',
               });
 
               return res.code(302).redirect(process.env.CORS_ORIGIN);
@@ -99,5 +100,16 @@ export class AuthController {
     } catch (error) {
       return res.code(302).redirect(`${process.env.CORS_ORIGIN}/sign-in`);
     }
+  }
+
+  @Post('sign-out')
+  async signOut(
+    @Req() _req: FastifyRequest,
+    @Res() res: FastifyReply,
+  ): Promise<string> {
+    res.clearCookie('refresh_token', { domain: '.culinarybook.website' });
+    res.clearCookie('refresh_token');
+
+    return res.send('You are successfully sign out');
   }
 }
