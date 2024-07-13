@@ -13,6 +13,10 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { createAccessToken, createRefreshToken } from '../utils/token.util';
 import { SignInDto } from './dto/sign-in.dto';
 import { FastifyInstance } from 'fastify';
+import crypto from 'crypto';
+import * as path from 'node:path';
+import nodemailer from 'nodemailer';
+import ejs from 'ejs';
 
 @Injectable()
 export class AuthService {
@@ -118,7 +122,45 @@ export class AuthService {
 
       return { access_token, refresh_token };
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async sendConfirmationCode(userId: string, email: string) {
+    try {
+      const code = crypto.randomInt(100000, 999999).toString();
+      const hashedCode = await bcrypt.hash(code, 8);
+
+      const currentCode = await this.prisma.verificationCode.findFirst({
+        where: {
+          userId: userId,
+        },
+      });
+
+      if (currentCode) {
+        await this.prisma.verificationCode.delete({
+          where: {
+            id: currentCode.id,
+          },
+        });
+      }
+
+      const expiryTime = new Date();
+      expiryTime.setMinutes(expiryTime.getMinutes() + 10);
+
+      const createdCode = await this.prisma.verificationCode.create({
+        data: {
+          code: hashedCode,
+          expiryTime: expiryTime.getTime(),
+          userId: userId,
+        },
+      });
+
+      await this.sendCodeToEmail(email, createdCode.code);
+
+      return 'Code sent';
+    } catch (error) {
       throw new InternalServerErrorException('Internal server error');
     }
   }
@@ -133,5 +175,31 @@ export class AuthService {
       );
     }
     return result;
+  }
+
+  private async sendCodeToEmail(email: string, code: string) {
+    const templatePath = path.resolve(
+      __dirname,
+      '../../views/confirmationCode.ejs',
+    );
+    const html = await ejs.renderFile(templatePath, { code, email });
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.NODEMAILER_USER as string,
+        pass: process.env.NODEMAILER_PASS as string,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.NODEMAILER_USER as string,
+      to: email,
+      subject: 'Your confirmation code for Culinarybook✅',
+      text: 'Your confirmation code',
+      html: html,
+    };
+
+    return await transporter.sendMail(mailOptions);
   }
 }

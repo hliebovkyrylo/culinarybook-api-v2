@@ -1,9 +1,19 @@
 import { AuthService } from './auth.service';
-import { Body, Controller, Res, Post, Get, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Res,
+  Post,
+  Get,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { SignUpDto } from './dto/sign-up.dto';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { SignInDto } from './dto/sign-in.dto';
 import sget from 'simple-get';
+import { AuthGuard } from '../common/guards/auth.guard';
+import { User } from '@prisma/client';
 
 @Controller('/auth')
 export class AuthController {
@@ -111,5 +121,13 @@ export class AuthController {
     res.clearCookie('refresh_token');
 
     return res.send('You are successfully sign out');
+  }
+
+  @Post('send-code')
+  @UseGuards(AuthGuard)
+  async sendConfirmationCode(@Req() req: FastifyRequest): Promise<string> {
+    const user = req.user as User;
+
+    return await this.authService.sendConfirmationCode(user.id, user.email);
   }
 }

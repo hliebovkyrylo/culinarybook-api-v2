@@ -45,12 +45,7 @@ export const createRefreshToken = (id: string) => {
 };
 
 export const verifyToken = (token: string) => {
-  try {
-    const payload = jwt.verify(token, jwtSecret) as IPayload;
+  const payload = jwt.verify(token, jwtSecret) as IPayload;
 
-    return payload.id;
-  } catch (error) {
-    console.log(error);
-    throw new InternalServerErrorException('Internal server error');
-  }
+  return payload.id;
 };

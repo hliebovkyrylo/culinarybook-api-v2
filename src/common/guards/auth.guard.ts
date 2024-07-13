@@ -34,16 +34,16 @@ export class AuthGuard implements CanActivate {
       req.user = user;
       return true;
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException('Access token has expired');
       }
 
       if (error instanceof JsonWebTokenError) {
         throw new BadRequestException('Access token is not valid');
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
       }
     }
   }

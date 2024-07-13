@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <style>
+    .main {
+      font-family: "Poppins", sans-serif;
+      width: 100%;
+    }
+
+    .code {
+      width: 420px;
+      height: 420px;
+      margin: 0 auto;
+      background-color: #DFDFDF;
+      padding: 24px 32px;
+      border-radius: 12px;
+    }
+
+    .code__title {
+      font-size: 32px;
+      margin: 0;
+    }
+
+    .code__text {
+      font-size: 16px;
+      margin-top: 12px;
+    }
+
+    .code__items {
+      text-align: center;
+    }
+
+    .code__mainText {
+      font-size: 64px;
+      margin: 32px 0;
+      font-weight: 700;
+      border-bottom: 1px solid #B1B1B1;
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <section class="code">
+      <h1 class="code__title">🧁Culinarybook</h1>
+      <p class="code__text">Hello, it’s your confirmation code:</p>
+      <div class="code__items">
+        <p class="code__mainText"><%= code %></p>
+        <span class="code__text">Sincerely,</span>
+        <br>
+        <span style="font-size: 24px; font-weight: 700;">Culinarybook</span>
+        <div style="margin-top: 12px;">
+          <span style="font-size: 12px; display: block;">This mail has been sent to </span>
+          <span style="font-size: 12px;"><%= email %></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
