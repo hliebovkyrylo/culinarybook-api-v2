@@ -1,12 +1,13 @@
 import { AuthService } from './auth.service';
-import { Body, Controller, Res, Post } from '@nestjs/common';
+import { Body, Controller, Res, Post, Get, Req } from '@nestjs/common';
 import { SignUpDto } from './dto/sign-up.dto';
-import { FastifyReply } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import { SignInDto } from './dto/sign-in.dto';
+import sget from 'simple-get';
 
 @Controller('/auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('sign-up')
   async signUp(
@@ -40,5 +41,63 @@ export class AuthController {
       path: '/',
     });
     return res.send({ access_token: result.access_token });
+  }
+
+  @Get('google/callback')
+  async googleAuthCallback(
+    @Req() req: FastifyRequest,
+    @Res() res: FastifyReply,
+  ) {
+    try {
+      req.server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
+        req,
+        (err, result) => {
+          if (err) {
+            res.send(err);
+            return;
+          }
+
+          sget.concat(
+            {
+              url: 'https://www.googleapis.com/oauth2/v2/userinfo',
+              method: 'GET',
+              headers: {
+                Authorization: 'Bearer ' + result.token.access_token,
+              },
+              json: true,
+            },
+            async (err, _, data) => {
+              if (err) {
+                return res
+                  .code(302)
+                  .redirect(`${process.env.CORS_ORIGIN}/sign-in`);
+              }
+
+              const result = await this.authService.handleOAuthLogin(data);
+
+              res.setCookie('refresh_token', result.refresh_token, {
+                httpOnly: true,
+                secure: process.env.PRODUCTION === 'true',
+                sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
+                maxAge: 31 * 24 * 60 * 60 * 1000,
+                path: '/',
+              });
+
+              res.setCookie('access_token', result.access_token, {
+                httpOnly: true,
+                secure: process.env.PRODUCTION === 'true',
+                sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
+                maxAge: 2 * 24 * 60 * 60 * 1000,
+                path: '/',
+              });
+
+              return res.code(302).redirect(process.env.CORS_ORIGIN);
+            },
+          );
+        },
+      );
+    } catch (error) {
+      return res.code(302).redirect(`${process.env.CORS_ORIGIN}/sign-in`);
+    }
   }
 }

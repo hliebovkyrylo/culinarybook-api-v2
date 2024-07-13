@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   HttpException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,11 +12,14 @@ import bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/sign-up.dto';
 import { createAccessToken, createRefreshToken } from '../utils/token.util';
 import { SignInDto } from './dto/sign-in.dto';
-import { Profile } from 'passport-google-oauth20';
+import { FastifyInstance } from 'fastify';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject('FASTIFY_INSTANCE') private readonly fastify: FastifyInstance,
+  ) {}
 
   async signUp(
     data: SignUpDto,
@@ -79,5 +83,55 @@ export class AuthService {
       }
       throw new InternalServerErrorException('Internal server error');
     }
+  }
+
+  async handleOAuthLogin(profile: any) {
+    try {
+      const email = profile.email;
+      let user = await this.prisma.user.findFirst({
+        where: {
+          email: email,
+        },
+      });
+
+      if (!user) {
+        const randomPassword = this.generateRandomString(8);
+        const hashedRandomPassword = await bcrypt.hash(randomPassword, 8);
+
+        user = await this.prisma.user.create({
+          data: {
+            email: email,
+            username: email + email.split('@')[0],
+            name: profile.name,
+            image: '',
+            backgroundImage: '',
+            isVerified: true,
+            canResetPassword: false,
+            password: hashedRandomPassword,
+            isPrivate: false,
+          },
+        });
+      }
+
+      const access_token = createAccessToken(user.id);
+      const refresh_token = createRefreshToken(user.id);
+
+      return { access_token, refresh_token };
+    } catch (error) {
+      console.log(error)
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  private generateRandomString(length: number): string {
+    const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length),
+      );
+    }
+    return result;
   }
 }
