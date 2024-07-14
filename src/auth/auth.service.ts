@@ -240,6 +240,26 @@ export class AuthService {
     }
   }
 
+  async forgotPassword(email: string): Promise<string> {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { email: email },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      return await this.sendConfirmationCode(user.id, email);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
   private generateRandomString(length: number): string {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

@@ -17,6 +17,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { User } from '@prisma/client';
 import { VerifyAccountDto } from './dto/verify-account.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 
 @Controller('/auth')
 export class AuthController {
@@ -157,5 +158,12 @@ export class AuthController {
     const user = req.user as User;
 
     return this.authService.changePassword(user, changePasswordDto);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body() forgotPassword: ForgotPasswordDto,
+  ): Promise<string> {
+    return this.authService.forgotPassword(forgotPassword.email);
   }
 }
