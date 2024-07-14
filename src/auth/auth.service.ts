@@ -294,6 +294,9 @@ export class AuthService {
         where: { id: user.id },
         data: { canResetPassword: true },
       });
+      await this.prisma.verificationCode.delete({
+        where: { id: user.vereficationCode.id },
+      });
 
       return 'Access allowed';
     } catch (error) {
