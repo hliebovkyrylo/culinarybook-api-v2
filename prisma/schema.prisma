@@ -18,7 +18,7 @@ model User {
   canResetPassword     Boolean             @default(false)
   password             String
   isPrivate            Boolean             @default(false)
-  vereficationCode     VerificationCode[]
+  vereficationCode     VerificationCode?
   follows              Follow[]            @relation("UserFollows")
   followed             Follow[]            @relation("UserFollowed")
   recipe               Recipe[]

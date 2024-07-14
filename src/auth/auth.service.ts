@@ -19,6 +19,8 @@ import * as path from 'node:path';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { CanResetPasswordDto } from './dto/can-reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -240,17 +242,17 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(email: string): Promise<string> {
+  async forgotPassword(forgotPassword: ForgotPasswordDto): Promise<string> {
     try {
       const user = await this.prisma.user.findFirst({
-        where: { email: email },
+        where: { email: forgotPassword.email },
       });
 
       if (!user) {
         throw new NotFoundException('User not found');
       }
 
-      return await this.sendConfirmationCode(user.id, email);
+      return await this.sendConfirmationCode(user.id, forgotPassword.email);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -258,6 +260,39 @@ export class AuthService {
 
       throw new InternalServerErrorException('Internal server error');
     }
+  }
+
+  async canResetPassword(
+    canResetPasswordDto: CanResetPasswordDto,
+  ): Promise<string> {
+    const user = await this.prisma.user.findFirst({
+      where: { email: canResetPasswordDto.email },
+      include: { vereficationCode: true },
+    });
+
+    if (!user.vereficationCode) {
+      throw new NotFoundException('Code not found');
+    }
+
+    const isCorrectCode = await bcrypt.compare(
+      canResetPasswordDto.code,
+      user.vereficationCode.code,
+    );
+
+    if (!isCorrectCode) {
+      throw new ConflictException('Code incorrect');
+    }
+
+    if (Date.now() > user.vereficationCode.expiryTime) {
+      throw new ConflictException('Code has expired');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { canResetPassword: true },
+    });
+
+    return 'Access allowed';
   }
 
   private generateRandomString(length: number): string {

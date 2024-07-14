@@ -164,6 +164,6 @@ export class AuthController {
   async forgotPassword(
     @Body() forgotPassword: ForgotPasswordDto,
   ): Promise<string> {
-    return this.authService.forgotPassword(forgotPassword.email);
+    return this.authService.forgotPassword(forgotPassword);
   }
 }
