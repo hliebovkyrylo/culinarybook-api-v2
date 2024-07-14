@@ -8,6 +8,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/sign-up.dto';
 import { createAccessToken, createRefreshToken } from '../utils/token.util';
@@ -122,7 +123,6 @@ export class AuthService {
 
       return { access_token, refresh_token };
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException('Internal server error');
     }
   }
@@ -149,7 +149,7 @@ export class AuthService {
       const expiryTime = new Date();
       expiryTime.setMinutes(expiryTime.getMinutes() + 10);
 
-      const createdCode = await this.prisma.verificationCode.create({
+      await this.prisma.verificationCode.create({
         data: {
           code: hashedCode,
           expiryTime: expiryTime.getTime(),
@@ -157,10 +157,52 @@ export class AuthService {
         },
       });
 
-      await this.sendCodeToEmail(email, createdCode.code);
+      await this.sendCodeToEmail(email, code);
 
       return 'Code sent';
     } catch (error) {
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async verifyAccount(user: User, code: string) {
+    try {
+      const trueCode = await this.prisma.verificationCode.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (!trueCode) {
+        throw new NotFoundException('Code not found');
+      }
+
+      const isCorrectCode = await bcrypt.compare(code, trueCode.code);
+
+      if (!isCorrectCode) {
+        throw new ConflictException('Wrong entered code');
+      }
+
+      if (Date.now() > trueCode.expiryTime) {
+        throw new ConflictException('Code has expired');
+      }
+
+      if (user.isVerified) {
+        throw new BadRequestException('Account already verified');
+      }
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isVerified: true },
+      });
+      await this.prisma.verificationCode.delete({ where: { id: trueCode.id } });
+
+      return 'Account verified';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Internal server error');
     }
   }

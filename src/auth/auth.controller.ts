@@ -14,6 +14,7 @@ import { SignInDto } from './dto/sign-in.dto';
 import sget from 'simple-get';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { User } from '@prisma/client';
+import { VerifyAccountDto } from './dto/verify-account.dto';
 
 @Controller('/auth')
 export class AuthController {
@@ -129,5 +130,19 @@ export class AuthController {
     const user = req.user as User;
 
     return await this.authService.sendConfirmationCode(user.id, user.email);
+  }
+
+  @Post('verify-account')
+  @UseGuards(AuthGuard)
+  async verifyAccount(
+    @Req() req: FastifyRequest,
+    @Body() verifyAccountDto: VerifyAccountDto,
+  ): Promise<string> {
+    const user = req.user as User;
+
+    return await this.authService.verifyAccount(
+      user,
+      verifyAccountDto.code.toString(),
+    );
   }
 }
