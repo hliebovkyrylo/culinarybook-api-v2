@@ -18,6 +18,7 @@ import crypto from 'crypto';
 import * as path from 'node:path';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -198,6 +199,38 @@ export class AuthService {
       await this.prisma.verificationCode.delete({ where: { id: trueCode.id } });
 
       return 'Account verified';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async changePassword(user: User, data: ChangePasswordDto): Promise<string> {
+    try {
+      const isMatchPasswords = await bcrypt.compare(
+        data.oldPassword,
+        user.password,
+      );
+
+      if (!isMatchPasswords) {
+        throw new ConflictException('Old password is not correct');
+      }
+
+      if (data.newPassword !== data.confirmNewPassword) {
+        throw new ConflictException('Password mismatch');
+      }
+
+      const hashedNewPassword = await bcrypt.hash(data.newPassword, 8);
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedNewPassword },
+      });
+
+      return 'Password successfully changed';
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

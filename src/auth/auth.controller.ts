@@ -7,6 +7,7 @@ import {
   Get,
   Req,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { SignUpDto } from './dto/sign-up.dto';
 import { FastifyReply, FastifyRequest } from 'fastify';
@@ -15,6 +16,7 @@ import sget from 'simple-get';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { User } from '@prisma/client';
 import { VerifyAccountDto } from './dto/verify-account.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('/auth')
 export class AuthController {
@@ -144,5 +146,16 @@ export class AuthController {
       user,
       verifyAccountDto.code.toString(),
     );
+  }
+
+  @Patch('update/password')
+  @UseGuards(AuthGuard)
+  async updatePassword(
+    @Req() req: FastifyRequest,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<string> {
+    const user = req.user as User;
+
+    return this.authService.changePassword(user, changePasswordDto);
   }
 }
