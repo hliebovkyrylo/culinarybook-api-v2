@@ -2,6 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   Inject,
   Injectable,
@@ -21,6 +22,7 @@ import ejs from 'ejs';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { CanResetPasswordDto } from './dto/can-reset-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -265,34 +267,79 @@ export class AuthService {
   async canResetPassword(
     canResetPasswordDto: CanResetPasswordDto,
   ): Promise<string> {
-    const user = await this.prisma.user.findFirst({
-      where: { email: canResetPasswordDto.email },
-      include: { vereficationCode: true },
-    });
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { email: canResetPasswordDto.email },
+        include: { vereficationCode: true },
+      });
 
-    if (!user.vereficationCode) {
-      throw new NotFoundException('Code not found');
+      if (!user.vereficationCode) {
+        throw new NotFoundException('Code not found');
+      }
+
+      const isCorrectCode = await bcrypt.compare(
+        canResetPasswordDto.code,
+        user.vereficationCode.code,
+      );
+
+      if (!isCorrectCode) {
+        throw new ConflictException('Code incorrect');
+      }
+
+      if (Date.now() > user.vereficationCode.expiryTime) {
+        throw new ConflictException('Code has expired');
+      }
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { canResetPassword: true },
+      });
+
+      return 'Access allowed';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
     }
+  }
 
-    const isCorrectCode = await bcrypt.compare(
-      canResetPasswordDto.code,
-      user.vereficationCode.code,
-    );
+  async resetPassword(
+    email: string,
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<string> {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { email: email },
+      });
 
-    if (!isCorrectCode) {
-      throw new ConflictException('Code incorrect');
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (user.canResetPassword === false) {
+        throw new ForbiddenException('You cant reset your password');
+      }
+
+      if (resetPasswordDto.confirmPassword !== resetPasswordDto.password) {
+        throw new ConflictException('Password mismatch');
+      }
+
+      const hashedNewPassword = await bcrypt.hash(resetPasswordDto.password, 8);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedNewPassword, canResetPassword: false },
+      });
+
+      return 'Password updated';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
     }
-
-    if (Date.now() > user.vereficationCode.expiryTime) {
-      throw new ConflictException('Code has expired');
-    }
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { canResetPassword: true },
-    });
-
-    return 'Access allowed';
   }
 
   private generateRandomString(length: number): string {

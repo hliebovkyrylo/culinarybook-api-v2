@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   Patch,
+  Param,
 } from '@nestjs/common';
 import { SignUpDto } from './dto/sign-up.dto';
 import { FastifyReply, FastifyRequest } from 'fastify';
@@ -17,7 +18,8 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { User } from '@prisma/client';
 import { VerifyAccountDto } from './dto/verify-account.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('/auth')
 export class AuthController {
@@ -157,13 +159,21 @@ export class AuthController {
   ): Promise<string> {
     const user = req.user as User;
 
-    return this.authService.changePassword(user, changePasswordDto);
+    return await this.authService.changePassword(user, changePasswordDto);
   }
 
   @Post('forgot-password')
   async forgotPassword(
     @Body() forgotPassword: ForgotPasswordDto,
   ): Promise<string> {
-    return this.authService.forgotPassword(forgotPassword);
+    return await this.authService.forgotPassword(forgotPassword);
+  }
+
+  @Patch(':email/reset-password')
+  async resetPassword(
+    @Param('email') email: string,
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<string> {
+    return await this.authService.resetPassword(email, resetPasswordDto);
   }
 }
