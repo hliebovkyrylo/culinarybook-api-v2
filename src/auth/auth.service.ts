@@ -395,6 +395,30 @@ export class AuthService {
     }
   }
 
+  async addRefreshTokenToBlacklist(refresh_token?: string): Promise<string> {
+    try {
+      if (!refresh_token) {
+        throw new NotFoundException('Refresh token not provided');
+      }
+
+      await this.prisma.blacklistedToken.create({
+        data: {
+          token: refresh_token,
+          expiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+          reason: 'Logged out',
+        },
+      });
+
+      return 'Token blacklisted';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
   private generateRandomString(length: number): string {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

@@ -120,9 +120,12 @@ export class AuthController {
 
   @Post('sign-out')
   async signOut(
-    @Req() _req: FastifyRequest,
+    @Req() req: FastifyRequest,
     @Res() res: FastifyReply,
   ): Promise<string> {
+    const refresh_token = req.cookies.refresh_token;
+    await this.authService.addRefreshTokenToBlacklist(refresh_token);
+
     res.clearCookie('refresh_token', { domain: '.culinarybook.website' });
     res.clearCookie('refresh_token');
 
