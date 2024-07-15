@@ -145,3 +145,14 @@ model FollowRequest {
   requesterId String @db.ObjectId
   requestedId String @db.ObjectId
 }
+
+model BlacklistedToken {
+  id          String   @id @db.ObjectId @default(auto()) @map("_id")
+  token       String
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  reason      String?
+
+  @@index([token])
+  @@index([expiresAt])
+}

@@ -8,11 +8,16 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/sign-up.dto';
-import { createAccessToken, createRefreshToken } from '../utils/token.util';
+import {
+  createAccessToken,
+  createRefreshToken,
+  verifyToken,
+} from '../utils/token.util';
 import { SignInDto } from './dto/sign-in.dto';
 import { FastifyInstance } from 'fastify';
 import crypto from 'crypto';
@@ -336,6 +341,51 @@ export class AuthService {
       });
 
       return 'Password updated';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async generateTokensByRefreshToken(
+    refresh_token?: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    try {
+      if (!refresh_token) {
+        throw new UnauthorizedException('Refresh token no provided');
+      }
+
+      const isBlacklisted = await this.prisma.blacklistedToken.findFirst({
+        where: { token: refresh_token },
+      });
+      if (isBlacklisted) {
+        throw new UnauthorizedException('Refresh token is blacklisted');
+      }
+
+      const userId = verifyToken(refresh_token);
+      const user = await this.prisma.user.findFirst({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const newAccessToken = createAccessToken(userId);
+      const newRefreshToken = createRefreshToken(userId);
+
+      await this.prisma.blacklistedToken.create({
+        data: {
+          token: refresh_token,
+          expiresAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+          reason: 'Access token has expired',
+        },
+      });
+
+      return { access_token: newAccessToken, refresh_token: newRefreshToken };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

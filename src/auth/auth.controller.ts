@@ -176,4 +176,24 @@ export class AuthController {
   ): Promise<string> {
     return await this.authService.resetPassword(email, resetPasswordDto);
   }
+
+  @Post('refresh-token')
+  async generateTokens(
+    @Req() req: FastifyRequest,
+    @Res() res: FastifyReply,
+  ): Promise<{ access_token: string }> {
+    const refresh_token = req.cookies.refresh_token;
+    const result =
+      await this.authService.generateTokensByRefreshToken(refresh_token);
+
+    res.setCookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.PRODUCTION === 'true',
+      sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
+      maxAge: 31 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+
+    return res.send({ access_token: result.access_token });
+  }
 }
