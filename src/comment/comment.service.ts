@@ -1,10 +1,10 @@
 import {
-  ConflictException, Get,
+  ConflictException,
   HttpException,
   Injectable,
   InternalServerErrorException,
-  NotFoundException, Param
-} from "@nestjs/common";
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Comment, User } from '@prisma/client';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -49,6 +49,22 @@ export class CommentService {
         throw error;
       }
 
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async getCommentsByRecipeId(recipeId: string): Promise<Comment[]> {
+    try {
+      return this.prisma.comment.findMany({
+        where: { recipeId: recipeId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: { id: true, image: true, username: true },
+          },
+        },
+      });
+    } catch (error) {
       throw new InternalServerErrorException('Internal server error');
     }
   }
