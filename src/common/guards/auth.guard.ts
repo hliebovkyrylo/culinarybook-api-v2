@@ -3,6 +3,8 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
+  HttpException,
+  Inject,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,7 +13,7 @@ import { verifyToken } from '../../utils/token.util';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
 export class AuthGuard implements CanActivate {
-  constructor(private userService: UserService) {}
+  constructor(@Inject(UserService) private userService: UserService) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<FastifyRequest>();
@@ -38,6 +40,10 @@ export class AuthGuard implements CanActivate {
 
       if (error instanceof JsonWebTokenError) {
         throw new BadRequestException('Access token is not valid');
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
       }
     }
   }

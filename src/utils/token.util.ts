@@ -1,56 +1,47 @@
 import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
+import { InternalServerErrorException } from '@nestjs/common';
 
 const jwtSecret = process.env.JWT_SECRET as string;
-const jwtAccessTokenExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
-const jwtRefreshTokenExpiresIn = process.env.REFRESH_EXPIRES_IN;
+const jwtAccessTokenExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN as string;
+const jwtRefreshTokenExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN as string;
 
 interface IPayload {
   id: string;
 }
 
 export const createAccessToken = (id: string) => {
-  return jwt.sign(
-    {
-      id,
-    },
-    jwtSecret,
-    {
-      expiresIn: jwtAccessTokenExpiresIn,
-    },
-  );
+  try {
+    return jwt.sign(
+      {
+        id,
+      },
+      jwtSecret,
+      {
+        expiresIn: jwtAccessTokenExpiresIn,
+      },
+    );
+  } catch (error) {
+    console.log(error);
+    throw new InternalServerErrorException('Internal server error');
+  }
 };
 
 export const createRefreshToken = (id: string) => {
-  const refreshToken = jwt.sign(
-    {
-      id,
-    },
-    jwtSecret,
-    {
-      expiresIn: jwtRefreshTokenExpiresIn,
-    },
-  );
-
-  return serialize('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure: process.env.PRODUCTION === 'true',
-    sameSite: process.env.PRODUCTION === 'true' ? 'strict' : 'lax',
-    maxAge: 60 * 60 * 24 * 31,
-    path: '/',
-  });
-};
-
-export const createNoSerializedRefreshToken = (id: string) => {
-  return jwt.sign(
-    {
-      id,
-    },
-    jwtSecret,
-    {
-      expiresIn: jwtRefreshTokenExpiresIn,
-    },
-  );
+  try {
+    return jwt.sign(
+      {
+        id,
+      },
+      jwtSecret,
+      {
+        expiresIn: jwtRefreshTokenExpiresIn,
+      },
+    );
+  } catch (error) {
+    console.log(error);
+    throw new InternalServerErrorException('Internal server error');
+  }
 };
 
 export const verifyToken = (token: string) => {
