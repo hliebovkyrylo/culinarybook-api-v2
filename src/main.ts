@@ -13,6 +13,8 @@ import { HttpExeptionFilter } from './middleware/http-exeption.middleware';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import fastifyOauth2 from '@fastify/oauth2';
 import { fastifyGoogleOauthConfig } from './config/fastify-google-oauth.config';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationError } from 'class-validator';
 
 config();
 
@@ -26,6 +28,15 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({
       bodyLimit: 1048576,
+    }),
+  );
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        const constrains = validationErrors[0].constraints;
+        return new BadRequestException(constrains);
+      },
     }),
   );
 
