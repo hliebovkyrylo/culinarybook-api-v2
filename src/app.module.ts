@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BlacklistModule } from './blacklist/blacklist.module';
 import { CommentModule } from './comment/comment.module';
+import { CommentReplyModule } from './comment-reply/comment-reply.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CommentModule } from './comment/comment.module';
     ScheduleModule.forRoot(),
     BlacklistModule,
     CommentModule,
+    CommentReplyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
