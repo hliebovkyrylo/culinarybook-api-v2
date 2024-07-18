@@ -42,9 +42,23 @@ export class CommentService {
         );
       }
 
-      return this.prisma.comment.create({
+      const comment = await this.prisma.comment.create({
         data: { ...createCommentDto, recipeId: recipeId, userId: user.id },
       });
+
+      if (user.id !== recipe.ownerId) {
+        await this.prisma.notification.create({
+          data: {
+            userId: recipe.ownerId,
+            noficitaionCreatorId: user.id,
+            type: 'comment',
+            noficationData: createCommentDto.commentText,
+            recipeId: recipe.id,
+          },
+        });
+      }
+
+      return comment;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
