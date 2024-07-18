@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -36,5 +37,16 @@ export class CommentController {
     const comments = await this.commentService.getCommentsByRecipeId(recipeId);
 
     return { comments };
+  }
+
+  @Delete(':commentId/delete')
+  @UseGuards(AuthGuard)
+  async deleteComment(
+    @Param('commentId') commentId: string,
+    @Req() req: FastifyRequest,
+  ): Promise<string> {
+    const user = req.user as User;
+
+    return this.commentService.deleteComment(user.id, commentId);
   }
 }
