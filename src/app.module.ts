@@ -5,9 +5,16 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BlacklistModule } from './blacklist/blacklist.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
-  imports: [UserModule, AuthModule, ScheduleModule.forRoot(), BlacklistModule],
+  imports: [
+    UserModule,
+    AuthModule,
+    ScheduleModule.forRoot(),
+    BlacklistModule,
+    CommentModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
