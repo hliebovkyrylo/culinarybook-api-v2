@@ -1,4 +1,12 @@
-import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CommentReplyService } from './comment-reply.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { FastifyRequest } from 'fastify';
@@ -23,5 +31,16 @@ export class CommentReplyController {
       user.id,
       createCommentReplyDto,
     );
+  }
+
+  @Delete(':commentReplyId/delete')
+  @UseGuards(AuthGuard)
+  async deleteCommentReply(
+    @Req() req: FastifyRequest,
+    @Param('commentReplyId') commentReplyId: string,
+  ) {
+    const user = req.user as User;
+
+    return this.commentReplyService.deleteCommentReply(commentReplyId, user.id);
   }
 }

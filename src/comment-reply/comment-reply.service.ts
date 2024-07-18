@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -60,6 +61,51 @@ export class CommentReplyService {
       }
 
       return commentReply;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async deleteCommentReply(
+    commentReplyId: string,
+    userId: string,
+  ): Promise<string> {
+    try {
+      const commentReply = await this.prisma.commentReply.findFirst({
+        where: { id: commentReplyId },
+        include: { comment: { include: { recipe: true } } },
+      });
+
+      if (!commentReply) {
+        throw new NotFoundException('Comment reply not found');
+      }
+
+      if (userId.toString() !== commentReply.userId.toString()) {
+        throw new ForbiddenException('Have no access to change it');
+      }
+
+      await this.prisma.commentReply.delete({
+        where: { id: commentReplyId },
+      });
+
+      const notification = await this.prisma.notification.findFirst({
+        where: {
+          noficitaionCreatorId: userId,
+          recipeId: commentReply.comment.recipe.id,
+          type: 'comment-reply',
+        },
+      });
+      if (notification) {
+        await this.prisma.notification.delete({
+          where: { id: notification.id },
+        });
+      }
+
+      return 'Comment reply deleted';
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
