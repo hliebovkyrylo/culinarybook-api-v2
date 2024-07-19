@@ -56,4 +56,42 @@ export class LikeService {
       throw new InternalServerErrorException('Internal server error');
     }
   }
+
+  async removeLike(recipeId: string, userId: string): Promise<string> {
+    try {
+      const like = await this.prisma.like.findFirst({
+        where: { recipeId: recipeId, userId: userId },
+      });
+
+      if (!like) {
+        throw new NotFoundException('Like not found');
+      }
+
+      await this.prisma.like.delete({
+        where: { id: like.id },
+      });
+
+      const notification = await this.prisma.notification.findFirst({
+        where: {
+          noficitaionCreatorId: userId,
+          recipeId: like.recipeId,
+          type: 'like',
+        },
+      });
+
+      if (notification) {
+        await this.prisma.notification.delete({
+          where: { id: notification.id },
+        });
+      }
+
+      return 'Like removed';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
 }

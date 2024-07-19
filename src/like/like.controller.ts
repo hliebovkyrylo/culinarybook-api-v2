@@ -1,4 +1,11 @@
-import { Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { LikeService } from './like.service';
 import { FastifyRequest } from 'fastify';
 import { User } from '@prisma/client';
@@ -17,5 +24,16 @@ export class LikeController {
     const user = req.user as User;
 
     return this.likeService.createLike(recipeId, user.id);
+  }
+
+  @Delete('for/:recipeId/delete')
+  @UseGuards(AuthGuard)
+  async removeLike(
+    @Req() req: FastifyRequest,
+    @Param('recipeId') recipeId: string,
+  ): Promise<string> {
+    const user = req.user as User;
+
+    return this.likeService.removeLike(recipeId, user.id);
   }
 }
