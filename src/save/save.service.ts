@@ -53,4 +53,42 @@ export class SaveService {
       throw new InternalServerErrorException('Internal server error');
     }
   }
+
+  async removeSave(recipeId: string, userId: string): Promise<string> {
+    try {
+      const save = await this.prisma.saved.findFirst({
+        where: { recipeId: recipeId, userId: userId },
+      });
+
+      if (!save) {
+        throw new NotFoundException('Save not found');
+      }
+
+      await this.prisma.saved.delete({
+        where: { id: save.id },
+      });
+
+      const notification = await this.prisma.notification.findFirst({
+        where: {
+          noficitaionCreatorId: userId,
+          recipeId: recipeId,
+          type: 'save',
+        },
+      });
+
+      if (notification) {
+        await this.prisma.notification.delete({
+          where: { id: notification.id },
+        });
+      }
+
+      return 'Save removed';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
 }

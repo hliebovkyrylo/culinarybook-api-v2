@@ -1,4 +1,11 @@
-import { Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { User } from '@prisma/client';
 import { SaveService } from './save.service';
@@ -17,5 +24,16 @@ export class SaveController {
     const user = req.user as User;
 
     return this.saveService.createSave(recipeId, user.id);
+  }
+
+  @Delete('for/:recipeId/delete')
+  @UseGuards(AuthGuard)
+  async removeSave(
+    @Req() req: FastifyRequest,
+    @Param('recipeId') recipeId: string,
+  ): Promise<string> {
+    const user = req.user as User;
+
+    return this.saveService.removeSave(recipeId, user.id);
   }
 }
