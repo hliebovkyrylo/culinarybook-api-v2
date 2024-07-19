@@ -99,10 +99,14 @@ export class LikeService {
     recipeId: string,
     userId: string,
   ): Promise<{ isLiked: boolean }> {
-    const like = await this.prisma.like.findFirst({
-      where: { recipeId: recipeId, userId: userId },
-    });
+    try {
+      const like = await this.prisma.like.findFirst({
+        where: { recipeId: recipeId, userId: userId },
+      });
 
-    return { isLiked: !!like };
+      return { isLiked: !!like };
+    } catch (error) {
+      throw new InternalServerErrorException('Internal server error');
+    }
   }
 }
