@@ -94,4 +94,15 @@ export class LikeService {
       throw new InternalServerErrorException('Internal server error');
     }
   }
+
+  async getLikeState(
+    recipeId: string,
+    userId: string,
+  ): Promise<{ isLiked: boolean }> {
+    const like = await this.prisma.like.findFirst({
+      where: { recipeId: recipeId, userId: userId },
+    });
+
+    return { isLiked: !!like };
+  }
 }

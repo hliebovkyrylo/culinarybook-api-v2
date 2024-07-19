@@ -1,6 +1,7 @@
 import {
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Req,
@@ -35,5 +36,16 @@ export class LikeController {
     const user = req.user as User;
 
     return this.likeService.removeLike(recipeId, user.id);
+  }
+
+  @Get('for/:recipeId/state')
+  @UseGuards(AuthGuard)
+  async getLikeState(
+    @Req() req: FastifyRequest,
+    @Param('recipeId') recipeId: string,
+  ): Promise<{ isLiked: boolean }> {
+    const user = req.user as User;
+
+    return this.likeService.getLikeState(recipeId, user.id);
   }
 }
