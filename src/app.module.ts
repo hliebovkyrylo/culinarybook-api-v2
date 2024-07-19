@@ -7,6 +7,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BlacklistModule } from './blacklist/blacklist.module';
 import { CommentModule } from './comment/comment.module';
 import { CommentReplyModule } from './comment-reply/comment-reply.module';
+import { LikeModule } from './like/like.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CommentReplyModule } from './comment-reply/comment-reply.module';
     BlacklistModule,
     CommentModule,
     CommentReplyModule,
+    LikeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
