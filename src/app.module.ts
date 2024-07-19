@@ -8,6 +8,7 @@ import { BlacklistModule } from './blacklist/blacklist.module';
 import { CommentModule } from './comment/comment.module';
 import { CommentReplyModule } from './comment-reply/comment-reply.module';
 import { LikeModule } from './like/like.module';
+import { SaveModule } from './save/save.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { LikeModule } from './like/like.module';
     CommentModule,
     CommentReplyModule,
     LikeModule,
+    SaveModule,
   ],
   controllers: [AppController],
   providers: [AppService],
