@@ -1,6 +1,7 @@
 import {
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Req,
@@ -35,5 +36,16 @@ export class SaveController {
     const user = req.user as User;
 
     return this.saveService.removeSave(recipeId, user.id);
+  }
+
+  @Get('for/:recipeId/state')
+  @UseGuards(AuthGuard)
+  async getSaveState(
+    @Req() req: FastifyRequest,
+    @Param('recipeId') recipeId: string,
+  ): Promise<{ isSaved: boolean }> {
+    const user = req.user as User;
+
+    return this.saveService.getSaveState(recipeId, user.id);
   }
 }

@@ -91,4 +91,15 @@ export class SaveService {
       throw new InternalServerErrorException('Internal server error');
     }
   }
+
+  async getSaveState(
+    recipeId: string,
+    userId: string,
+  ): Promise<{ isSaved: boolean }> {
+    const save = await this.prisma.saved.findFirst({
+      where: { userId: userId, recipeId: recipeId },
+    });
+
+    return { isSaved: !!save };
+  }
 }
