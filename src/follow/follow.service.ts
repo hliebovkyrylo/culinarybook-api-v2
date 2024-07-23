@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ResponseFollowRequestDto } from './dto/response-follow-request.dto';
 
 @Injectable()
 export class FollowService {
@@ -59,6 +60,61 @@ export class FollowService {
       }
 
       return requestedUser.isPrivate ? 'Follow request sent' : 'Followed';
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Internal server error');
+    }
+  }
+
+  async responseFollowRequest(
+    requesterId: string,
+    requestedId: string,
+    responseFollowRequestDto: ResponseFollowRequestDto,
+  ): Promise<string> {
+    try {
+      const followRequest = await this.prisma.followRequest.findFirst({
+        where: { requesterId: requesterId, requestedId: requestedId },
+      });
+
+      if (!followRequest) {
+        throw new NotFoundException('Follow request not found');
+      }
+
+      if (responseFollowRequestDto.allowed) {
+        await Promise.all([
+          this.prisma.follow.create({
+            data: { followerId: requesterId, userId: requestedId },
+          }),
+          this.prisma.notification.create({
+            data: {
+              userId: requestedId,
+              noficitaionCreatorId: requesterId,
+              type: 'follow-allowed',
+              recipeId: null,
+            },
+          }),
+        ]);
+      }
+
+      await Promise.all([
+        this.prisma.followRequest.delete({
+          where: { id: followRequest.id },
+        }),
+        this.prisma.notification.deleteMany({
+          where: {
+            noficitaionCreatorId: requesterId,
+            userId: requestedId,
+            type: 'follow-request',
+          },
+        }),
+      ]);
+
+      return responseFollowRequestDto.allowed
+        ? 'Follow request approved'
+        : 'Follow request denied';
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
