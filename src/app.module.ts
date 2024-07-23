@@ -9,6 +9,7 @@ import { CommentModule } from './comment/comment.module';
 import { CommentReplyModule } from './comment-reply/comment-reply.module';
 import { LikeModule } from './like/like.module';
 import { SaveModule } from './save/save.module';
+import { FollowModule } from './follow/follow.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SaveModule } from './save/save.module';
     CommentReplyModule,
     LikeModule,
     SaveModule,
+    FollowModule,
   ],
   controllers: [AppController],
   providers: [AppService],
