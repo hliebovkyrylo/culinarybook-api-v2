@@ -9,8 +9,12 @@ import { config } from 'dotenv';
 import fastifyCors from '@fastify/cors';
 import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
-import fastifyPassport from '@fastify/passport';
 import { HttpExeptionFilter } from './middleware/http-exeption.middleware';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import fastifyOauth2 from '@fastify/oauth2';
+import { fastifyGoogleOauthConfig } from './config/fastify-google-oauth.config';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationError } from 'class-validator';
 
 config();
 
@@ -27,7 +31,17 @@ async function bootstrap() {
     }),
   );
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        const constrains = validationErrors[0].constraints;
+        return new BadRequestException(constrains);
+      },
+    }),
+  );
+
   app.useGlobalFilters(new HttpExeptionFilter());
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   await app.register(fastifyCors, {
     origin: corsOrigin,
@@ -35,6 +49,7 @@ async function bootstrap() {
   });
 
   await app.register(fastifyCookie);
+  await app.register(fastifyOauth2, fastifyGoogleOauthConfig);
 
   await app.register(fastifySession, {
     secret: sessionSecret,
@@ -43,9 +58,6 @@ async function bootstrap() {
       mongoUrl: sessionDBUrl,
     }),
   });
-
-  await app.register(fastifyPassport.initialize());
-  await app.register(fastifyPassport.secureSession());
 
   await app.listen(port);
 }
